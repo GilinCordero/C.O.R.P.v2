@@ -1,7 +1,9 @@
 # Equipo-G
 Predicción de la Demanda
 
-Problem Statement 
+## WEEK 1
+
+## Problem Statement 
 
 ### Research Question
 
