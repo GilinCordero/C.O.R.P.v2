@@ -11,6 +11,6 @@
 ---
 |  *Field* |  *Description* |
 |---|---|
-|  Columns |   |
-|     Issue found     |                                                            Some rows had duplicate                                                              |
-|           Action taken          |                                                                                                                                      |
+|  Columns |  `ship_addr,map_pae, name, start_time, at_plant_time, truck_code` |
+|     Issue found     |                                                            Some rows had duplicate values and some others had null values                                                              |
+|           Action taken          |                                                                   Dropped those rows, as the % of error was extremely low                                                                   |
