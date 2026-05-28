@@ -40,8 +40,8 @@
 - Not performed in this notebook (add if required for modeling).
 
 ## 7. Target Variable
-- `u_Volumen` (volume per delivery/hour) is the prediction target.
+- `u_Volumen` (volume per hour and per plant) is the prediction target.
 
 ## 8. Notes
 - All preprocessing steps are fully automated in the notebook.
-- Feature selection and windowing are designed for neural network input.
+- Feature selection and windowing are designed for transformer-based model input.

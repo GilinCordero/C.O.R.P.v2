@@ -16,9 +16,46 @@ The answer is really simple: *we need to change the goal into predicting within 
 
 Here is a documented list of all the additional theoretical advantages of using this model instead of SARIMAX:
 
-1. The number of interacting patterns and exogenous factors may multiply in a dramatic way, thus we are no longer needing a linear model.
-2. It enables `multi-horizon` time-series forecasting, meaning that it predicts a variable of interest at multiple future time steps. This gives us an advantage given the requirement: *We need to visualize predictions 45-60 days in advanced*.
-3. Due to its transformer arquitecture, a mechanism of score vectors is used to strengthen correlations betweeen the objetive variable and all the others, meaning that we can analyze with ease which variables positively affect the model results earlier.
+1. The number of interacting patterns and `exogenous` factors may multiply in a dramatic way, thus we are **no longer needing a linear model**.
+2. It enables `multi-horizon` time-series forecasting, meaning that it predicts a variable of interest at multiple future time steps. This gives us an advantage given the requirement: *"We need to visualize predictions 45-60 days in advanced"*.
+3. Due to its` transformer arquitecture`, a mechanism of score vectors is used to strengthen correlations betweeen the objetive variable and all the others, meaning that we can analyze with ease which variables positively affect the model results earlier.
+
+#### First Observations of our database:
+
+* 338216 rows (remissions) in total
+* 6 active plants
+* Plant 514 active since 2022, the rest since 2020
+* 
+
+#### Our variables and early potential-variables
+
+| _variable name_ | _meaning/description_ | _early-importance-rating (0-5)_ | _importance-rating-justification_ | _addition-verdict-justification_ |_early-training-set-addition-verdict_ | repeatable? | unique_count |  
+| — | — | — | — | — | — | — |
+| **tkt_code** | The id (number) assigned to each remission, meaning every time an appointment is created and completed succesfully. | 0 | NO addition to training | It is just a number to identify each order, it doesn´t mean anything to us | It is repeatable (confirmed during EDA) | Not relevant
+
+#### Observations (EDA/Cleaning_phase) for each variable
+
+* [**tkt_code**]{.underline}:
+    + 
+* 
+
+
+#### Types supported:
+
+* **Time-varying** _known
+
+* **Time-varying** _unknown_:
+
+* **Time-invariant** _real_
+
+* **Time-invariant** _categorical_
+
+
+### In my words, what is a TFT?
+
+Transformer-based deep learning model that uses self-attention mechanism to capture complex temporal dynamics of **multiple** time sequences.
+
+
 
 
 
