@@ -20,18 +20,28 @@ Here is a documented list of all the additional theoretical advantages of using 
 2. It enables `multi-horizon` time-series forecasting, meaning that it predicts a variable of interest at multiple future time steps. This gives us an advantage given the requirement: *"We need to visualize predictions 45-60 days in advanced"*.
 3. Due to its` transformer arquitecture`, a mechanism of score vectors is used to strengthen correlations betweeen the objetive variable and all the others, meaning that we can analyze with ease which variables positively affect the model results earlier.
 
+## Analysis of our data for model justification
+
 #### First Observations of our database:
 
-* 338216 rows (remissions) in total
+* 356332 rows (remissions) in total
 * 6 active plants
 * Plant 514 active since 2022, the rest since 2020
-* 
+* 15 default columns
 
-#### Our variables and early potential-variables
+#### Our features
 
-| _variable name_ | _meaning/description_ | _early-importance-rating (0-5)_ | _importance-rating-justification_ | _addition-verdict-justification_ |_early-training-set-addition-verdict_ | repeatable? | unique_count |  
-| — | — | — | — | — | — | — |
-| **tkt_code** | The id (number) assigned to each remission, meaning every time an appointment is created and completed succesfully. | 0 | NO addition to training | It is just a number to identify each order, it doesn´t mean anything to us | It is repeatable (confirmed during EDA) | Not relevant
+##### - Current Features
+
+| _variable name_ | _meaning/description_ | _early-importance-rating (0-5)_ | _importance-rating-justification_ | _addition-verdict-justification_ | _early-training-set-addition-verdict_ | repeatable? | unique_count |
+|---|---|---|---|---|---|---|---|
+| **tkt_code** | The id (number) assigned to each remission, meaning every time an appointment is created and completed successfully. | 0 | NO addition to training | It is just a number to identify each order; it doesn’t mean anything to us. | NO addition | Yes (confirmed during EDA) | Not relevant |
+|              |                                                                                                                      |   |                         |                                                                             |             |                            |              |
+
+
+
+##### - Potential-future features
+
 
 #### Observations (EDA/Cleaning_phase) for each variable
 
