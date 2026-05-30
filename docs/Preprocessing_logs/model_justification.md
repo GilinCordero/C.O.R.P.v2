@@ -43,7 +43,9 @@ Here is a documented list of all the additional theoretical advantages of using 
 ##### - Potential-future features
 
 
-#### Observations (EDA/Cleaning_phase) for each variable
+#### Observations after cleaning
+
+* 356332 rows (remissions) in total
 
 * [**tkt_code**]{.underline}:
     + 
