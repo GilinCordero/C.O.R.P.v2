@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 import holidays
 
-from app.utils.data_loader import load_model, load_hourly_features
+from utils.data_loader import load_model, load_hourly_features
 
 ROOT = Path(__file__).resolve().parents[2]
 

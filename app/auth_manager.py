@@ -3,7 +3,7 @@ import hashlib
 
 # Demo user — replace with proper DB in production
 _USERS = {
-    "gcc_corp_user": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",  # "password"
+    "gcc_corp_user": "b9f6ca8ed76ac3a4f5fac6132e825e059bb3004b0234a2e4eb20943bc64171c5",  # "password"
 }
 
 

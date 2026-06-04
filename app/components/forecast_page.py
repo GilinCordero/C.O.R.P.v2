@@ -5,14 +5,14 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from app.utils.data_loader import (
+from utils.data_loader import (
     load_hourly_features,
     load_validation,
     load_metrics,
     get_plant_names,
 )
-from app.utils.model_runner import run_hourly_forecast, save_forecast_csv
-from app.utils.visualization import (
+from utils.model_runner import run_hourly_forecast, save_forecast_csv
+from utils.visualization import (
     create_hourly_forecast_chart,
     create_daily_aggregation_chart,
     create_hourly_validation_chart,
@@ -55,7 +55,7 @@ def show_forecast_page():
     st.info(f"Datos actualizados al {last_time.strftime('%Y-%m-%d %H:%M')}. Prediciendo desde la siguiente hora.")
 
     # Slider outside tabs so it's available everywhere
-    days = st.slider("Dias a predecir", min_value=1, max_value=MAX_FORECAST_DAYS, value=7)
+    days = st.slider("Dias a predecir", min_value=1, max_value=MAX_FORECAST_DAYS, value=7, key=f"days_slider_{plant_id}")
     hours = days * 24
 
     # Compute forecast once and cache in session_state

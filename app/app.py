@@ -11,8 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 
-from app.auth_manager import verify_credentials, hash_password
-from app.utils.cache_manager import init_session_state, is_authenticated, login, logout
+from auth_manager import verify_credentials, hash_password
+from utils.cache_manager import init_session_state, is_authenticated, login, logout
 
 st.set_page_config(
     page_title="C.O.R.P. v2",
@@ -29,7 +29,7 @@ def show_login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        st.image("app/assets/logo_GCC.png", width=200)
+        st.image("./app/assets/logo_GCC.png", width=200)
         st.title("C.O.R.P. v2")
         st.caption("Concrete Operations Real-Time Predictions")
         st.markdown("---")
@@ -48,7 +48,7 @@ def show_login_page():
 
 def show_main_app():
     """Render main app after login."""
-    st.sidebar.image("app/assets/logo_GCC.png", width=150)
+    st.sidebar.image("./app/assets/logo_GCC.png", width=150)
     st.sidebar.title("C.O.R.P. v2")
     st.sidebar.markdown("Prediccion horaria con modelo LightGBM nativo")
     st.sidebar.markdown("---")
@@ -57,6 +57,7 @@ def show_main_app():
         "Navegacion",
         ["Prediccion de Demanda", "Gestion de Datos"],
         label_visibility="collapsed",
+        key="nav_radio",
     )
 
     st.sidebar.markdown("---")
@@ -66,10 +67,10 @@ def show_main_app():
         st.rerun()
 
     if page == "Prediccion de Demanda":
-        from app.components.forecast_page import show_forecast_page
+        from components.forecast_page import show_forecast_page
         show_forecast_page()
     elif page == "Gestion de Datos":
-        from app.components.data_management_page import show_data_management_page
+        from components.data_management_page import show_data_management_page
         show_data_management_page()
 
 
