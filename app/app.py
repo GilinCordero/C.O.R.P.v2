@@ -50,7 +50,7 @@ def show_main_app():
     """Render main app after login."""
     st.sidebar.image("./app/assets/logo_GCC.png", width=150)
     st.sidebar.title("C.O.R.P. v2")
-    st.sidebar.markdown("Prediccion horaria con modelo LightGBM nativo")
+    st.sidebar.markdown("Prediccion horaria de demanda")
     st.sidebar.markdown("---")
 
     page = st.sidebar.radio(

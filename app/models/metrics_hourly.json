@@ -1,39 +1,41 @@
 {
-  "mae_hourly_m3": 1.638,
-  "rmse_hourly_m3": 3.8177,
-  "smape_pct": 49.19,
-  "validation_rows": 51614,
-  "date_calculated": "2026-06-03T22:25:03.893086",
+  "mae_hourly_m3": 2.4252,
+  "rmse_hourly_m3": 6.2732,
+  "smape_pct": 152.64,
+  "validation_rows": 68898,
+  "date_calculated": "2026-06-07T11:56:42.396830",
+  "test_cutoff_date": "2025-01-01",
+  "best_iteration": 230,
   "by_plant": {
     "510": {
-      "mae": 1.727,
-      "rmse": 3.9836,
-      "count": 8602
+      "mae": 2.6815,
+      "rmse": 6.1211,
+      "count": 11482
     },
     "511": {
-      "mae": 1.8057,
-      "rmse": 4.1803,
-      "count": 8602
+      "mae": 2.6386,
+      "rmse": 7.3803,
+      "count": 11483
     },
     "512": {
-      "mae": 1.6468,
-      "rmse": 3.7388,
-      "count": 8603
+      "mae": 2.3227,
+      "rmse": 5.1223,
+      "count": 11484
     },
     "514": {
-      "mae": 1.4736,
-      "rmse": 3.3702,
-      "count": 8603
+      "mae": 2.1087,
+      "rmse": 5.0281,
+      "count": 11483
     },
     "515": {
-      "mae": 1.9431,
-      "rmse": 4.3786,
-      "count": 8602
+      "mae": 2.5089,
+      "rmse": 6.7833,
+      "count": 11483
     },
     "710": {
-      "mae": 1.2321,
-      "rmse": 3.0979,
-      "count": 8602
+      "mae": 2.2911,
+      "rmse": 6.8302,
+      "count": 11483
     }
   }
 }

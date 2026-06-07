@@ -23,6 +23,7 @@ Here is a documented list of the advantages of using LightGBM instead of SARIMAX
 5. **Feature interpretability**: Unlike black-box deep learning models, LightGBM provides native feature importance scores (split/gain) and is compatible with SHAP analysis, enabling clear understanding of what drives demand.
 6. **Fast retraining in production**: The model trains in minutes on commodity hardware (CPU), making it feasible to retrain frequently as new remission data arrives. This contrasts with deep learning alternatives (e.g., TFT) that require GPU resources and lengthy training cycles, and with SARIMAX which needs manual refitting and stationarity checks.
 
+### Multicollinearity resilience
 
-
+A natural concern with extensive feature engineering is multicollinearity: engineered features such as `hour` and `hour_sin`/`hour_cos`, or lag and rolling statistics derived from the same underlying series, are inherently correlated. Unlike linear models where multicollinearity destabilizes coefficient estimates and inflates standard errors, tree-based models like LightGBM are robust to it. During training, each tree selects the single feature that provides the best split at a given node; correlated alternatives are simply not chosen for that branch. Predictions remain stable and accurate regardless of redundancy among the input feature set. The only practical consequence is that feature importance becomes distributed across correlated variables, which affects interpretability but not model performance.
 

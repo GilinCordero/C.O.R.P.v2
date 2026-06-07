@@ -16,20 +16,12 @@ FEATURE_COLS = [
     "is_weekend", "is_sunday", "was_open",
     "hour_sin", "hour_cos", "day_week_sin", "day_week_cos",
     "month_sin", "month_cos",
-    "days_since_last_open", "days_to_quincena", "is_quincena",
-    "volume_per_remission_7d_avg", "is_holiday", "days_since_first_record",
+    "days_since_last_open",
+    "volume_per_remission_7d_avg", "is_holiday",
     "volume_m3_lag_24h", "volume_m3_lag_48h", "volume_m3_lag_1w",
     "volume_m3_roll_mean_24h", "volume_m3_roll_mean_48h", "volume_m3_roll_mean_1w",
     "volume_m3_roll_std_24h", "volume_m3_roll_std_48h", "volume_m3_roll_std_1w",
 ]
-
-
-def _days_to_quincena(d):
-    if d.day <= 15:
-        return 15 - d.day
-    else:
-        last_day = pd.Timestamp(d.year, d.month, 1) + pd.offsets.MonthEnd(0)
-        return (last_day - pd.Timestamp(d)).days
 
 
 def run_hourly_forecast(plant_id: int, start_time: pd.Timestamp, hours: int = 1080) -> pd.DataFrame:
@@ -107,11 +99,8 @@ def run_hourly_forecast(plant_id: int, start_time: pd.Timestamp, hours: int = 10
             "month_sin": np.sin(2 * np.pi * month / 12),
             "month_cos": np.cos(2 * np.pi * month / 12),
             "days_since_last_open": days_since_last_open,
-            "days_to_quincena": _days_to_quincena(target_time),
-            "is_quincena": int(dom == 15 or (target_time + pd.offsets.Day(1)).day == 1),
             "volume_per_remission_7d_avg": mean_vpr,
             "is_holiday": int(target_time.date() in holidays.MX(years=[year])),
-            "days_since_first_record": max(0, (day_floor - first_record_time).days),
             "volume_m3_lag_24h": get_lag(24),
             "volume_m3_lag_48h": get_lag(48),
             "volume_m3_lag_1w": get_lag(168),

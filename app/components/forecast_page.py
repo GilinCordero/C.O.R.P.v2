@@ -23,7 +23,7 @@ MAX_FORECAST_DAYS = 45
 
 def show_forecast_page():
     st.title("Prediccion de Demanda de Concreto")
-    st.caption("C.O.R.P. v2 - Modelo horario nativo con LightGBM")
+    st.caption("C.O.R.P. v2")
 
     # ------------------------------------------------------------------
     # Sidebar
@@ -38,7 +38,6 @@ def show_forecast_page():
     st.sidebar.markdown("---")
     metrics = load_metrics()
     st.sidebar.metric("MAE Horario (Test)", f"{metrics['mae_hourly_m3']:.2f} m3/hr")
-    st.sidebar.metric("sMAPE", f"{metrics['smape_pct']:.1f}%")
 
     # ------------------------------------------------------------------
     # Load data
@@ -66,10 +65,9 @@ def show_forecast_page():
 
     forecast = st.session_state[cache_key]
 
-    # Add P10-P90 confidence band based on historical errors (Jan 2026 onwards)
+    # Add P10-P90 confidence band based on historical errors (full test set)
     plant_val_errors = val_df[
-        (val_df["ship_plant_code"] == plant_id) &
-        (val_df["hour_bucket"] >= "2026-01-01")
+        val_df["ship_plant_code"] == plant_id
     ]["error"].values
     if len(plant_val_errors) > 0:
         p10_err = np.percentile(plant_val_errors, 10)
@@ -139,16 +137,14 @@ def show_forecast_page():
 
     # ==================== TAB 3: Validation ====================
     with tab3:
-        st.info("Comparacion entre valores reales y predichos en el conjunto de prueba (2025 en adelante).")
+        st.info("Comparacion entre valores reales y predichos en el conjunto de prueba.")
 
-        # Filter validation to Jan 2026 onwards
-        val_df_2026 = val_df[val_df["hour_bucket"] >= "2026-01-01"].copy()
-        plant_val = val_df_2026[val_df_2026["ship_plant_code"] == plant_id].copy()
+        plant_val = val_df[val_df["ship_plant_code"] == plant_id].copy()
         if not plant_val.empty:
             mae = plant_val["error"].abs().mean()
             st.metric("MAE Horario (Test)", f"{mae:.2f} m3")
 
-            fig_val = create_hourly_validation_chart(val_df_2026, plant_id, plant_names[plant_id])
+            fig_val = create_hourly_validation_chart(val_df, plant_id, plant_names[plant_id])
             st.plotly_chart(fig_val, use_container_width=True)
         else:
             st.warning("No hay datos de validacion para esta planta.")

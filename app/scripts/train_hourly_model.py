@@ -14,7 +14,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import lightgbm as lgb
 
 warnings.filterwarnings("ignore")
@@ -33,6 +32,7 @@ MODEL_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# Final feature set — aligned with model_runner.py inference logic
 FEATURE_COLS = [
     "ship_plant_code",
     "hour",
@@ -50,11 +50,8 @@ FEATURE_COLS = [
     "month_sin",
     "month_cos",
     "days_since_last_open",
-    "days_to_quincena",
-    "is_quincena",
     "volume_per_remission_7d_avg",
     "is_holiday",
-    "days_since_first_record",
     "volume_m3_lag_24h",
     "volume_m3_lag_48h",
     "volume_m3_lag_1w",
@@ -69,7 +66,7 @@ FEATURE_COLS = [
 TARGET_COL = "volume_m3"
 
 
-TEST_CUTOFF_DATE = "2025-01-01"  
+TEST_CUTOFF_DATE = "2025-01-01"
 RANDOM_STATE = 42
 
 LGB_PARAMS = {
@@ -95,7 +92,7 @@ def smape(y_true, y_pred):
 
 
 def train():
-  
+
     print(f"Loading data from {DATA_PATH}")
     df = pd.read_parquet(DATA_PATH)
     print(f"Loaded: {len(df):,} rows x {len(df.columns)} cols")
@@ -130,10 +127,8 @@ def train():
 
     print(f"Best iteration: {model.best_iteration}")
 
-
     y_pred = model.predict(X_test, num_iteration=model.best_iteration)
-    y_pred = np.clip(y_pred, 0, None)  
-
+    y_pred = np.clip(y_pred, 0, None)
 
     errors = y_test - y_pred
     mae = np.abs(errors).mean()
@@ -145,11 +140,9 @@ def train():
     print(f"RMSE:  {rmse:.4f} m3/hr")
     print(f"sMAPE: {smape_val:.2f}%")
 
-
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(model, f)
     print(f"\nModel saved: {MODEL_PATH}")
-
 
     metrics = {
         "mae_hourly_m3": round(float(mae), 4),
