@@ -1,4 +1,4 @@
-"""Data management page: model info, CSV upload, retraining guidance."""
+"""Data management page: model info, XLSX upload, retraining guidance."""
 from pathlib import Path
 
 import pandas as pd
@@ -17,11 +17,10 @@ def show_data_management_page():
     st.header("Metricas del Modelo")
     metrics = load_metrics()
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     col1.metric("MAE Horario", f"{metrics['mae_hourly_m3']:.2f} m3/hr")
     col2.metric("RMSE", f"{metrics['rmse_hourly_m3']:.2f} m3/hr")
-    col3.metric("sMAPE", f"{metrics['smape_pct']:.1f}%")
-    col4.metric("Filas Validacion", f"{metrics.get('validation_rows', '—'):,}")
+    col3.metric("Filas Validacion", f"{metrics.get('validation_rows', '—'):,}")
 
     st.markdown("---")
 
@@ -64,16 +63,23 @@ def show_data_management_page():
     st.subheader("Pasos para reentrenar manualmente")
     st.markdown(
         """
-        1. Actualiza el archivo Excel de remisiones en `Modulo_Alberto/data/processed/`.
-        2. Corre el script de feature engineering:
+        1. **Actualiza los datos crudos** en `Modulo_Alberto/data/raw/`.
+        2. **Corre los notebooks de preprocesamiento:**
+           - `1.data_cleaning.ipynb`
+           - `2.data_imputation.ipynb`
+           - `3.dataset_transform_and_FE.ipynb`
+        3. **(Opcional) Agrega features extras:**
            ```bash
-           python app/scripts/build_hourly_dataset.py
+           python Modulo_Alberto/scripts/extra_features_lightgbm.py
            ```
-        3. Corre el script de entrenamiento:
+        4. **Copia el dataset a la app:**
+           ```bash
+           cp Modulo_Alberto/data/processed/hourly_features_test.parquet app/data/hourly_features.parquet
+           ```
+        5. **Entrena el modelo:**
            ```bash
            python app/scripts/train_hourly_model.py
            ```
-        4. Reemplaza los archivos generados en `app/models/` y `app/data/`.
-        5. Reinicia la app de Streamlit.
+        6. **Reinicia la app de Streamlit.**
         """
     )

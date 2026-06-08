@@ -3,7 +3,7 @@
   "rmse_hourly_m3": 6.2823,
   "smape_pct": 152.14,
   "validation_rows": 68898,
-  "date_calculated": "2026-06-08T12:11:47.493960",
+  "date_calculated": "2026-06-08T11:54:59.014998",
   "test_cutoff_date": "2025-01-01",
   "best_iteration": 230,
   "by_plant": {

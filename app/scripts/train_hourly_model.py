@@ -42,6 +42,7 @@ FEATURE_COLS = [
     "year",
     "is_weekend",
     "is_sunday",
+    "is_saturday",
     "was_open",
     "hour_sin",
     "hour_cos",

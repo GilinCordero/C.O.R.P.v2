@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 FEATURE_COLS = [
     "ship_plant_code", "hour", "day_of_week", "month", "day_of_month", "year",
-    "is_weekend", "is_sunday", "was_open",
+    "is_weekend", "is_sunday", "is_saturday", "was_open",
     "hour_sin", "hour_cos", "day_week_sin", "day_week_cos",
     "month_sin", "month_cos",
     "days_since_last_open",
@@ -91,6 +91,7 @@ def run_hourly_forecast(plant_id: int, start_time: pd.Timestamp, hours: int = 10
             "year": year,
             "is_weekend": int(dow >= 5),
             "is_sunday": int(dow == 6),
+            "is_saturday": int(dow == 5),
             "was_open": is_open,
             "hour_sin": np.sin(2 * np.pi * hr / 24),
             "hour_cos": np.cos(2 * np.pi * hr / 24),
@@ -116,7 +117,8 @@ def run_hourly_forecast(plant_id: int, start_time: pd.Timestamp, hours: int = 10
         pred = float(model.predict(X)[0])
         pred = max(0.0, pred)
 
-        if dow == 6 or not (6 <= hr <= 16):
+        # Sunday or night hours (before 6am, after 8pm)
+        if dow == 6 or hr < 6 or hr > 20:
             pred = 0.0
 
         predicted_values.append(pred)
