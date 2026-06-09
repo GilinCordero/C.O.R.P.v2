@@ -20,6 +20,11 @@ from train import train_model, save_model
 from metrics import calculate_metrics, save_metrics, save_validation_csv
 
 # Drive integration (only used in production / GitHub Actions)
+# Ensure repo root is in path so app.api imports work in CI
+_repo_root = Path(__file__).resolve().parents[2]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
 try:
     from app.api.drive_client import (
         get_drive_service,
