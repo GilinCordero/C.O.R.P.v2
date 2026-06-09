@@ -65,11 +65,13 @@ def run_pipeline(
         if not drive_folder_id:
             drive_folder_id = get_or_create_folder(service, DRIVE_PATHS["folder_name"])
 
-        # Download historic
+        # Download historic from raw/original/
         historic_local = Path("/tmp/historic.xlsx")
-        historic_id = find_file(service, DRIVE_PATHS["historic_raw"].split("/")[-1], parent_id=drive_folder_id)
+        raw_folder_id = get_or_create_folder(service, "raw", parent_id=drive_folder_id)
+        original_folder_id = get_or_create_folder(service, "original", parent_id=raw_folder_id)
+        historic_id = find_file(service, "remissions_db_imputed_all_plants_2025.xlsx", parent_id=original_folder_id)
         if not historic_id:
-            raise FileNotFoundError("Historic file not found in Drive")
+            raise FileNotFoundError("Historic file not found in Drive at GCC_Corp/raw/original/")
         download_file(service, historic_id, historic_local)
 
         # Download new pending file
