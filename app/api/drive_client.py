@@ -1,10 +1,17 @@
-"""Google Drive API client using GCP Service Account."""
+"""Google Drive API client.
+
+Supports two auth methods (in priority order):
+1. OAuth 2.0 refresh token (GitHub Actions / CI / personal Drive)
+2. Service Account JSON (legacy / Workspace)
+"""
 import io
 import json
 import os
 import tempfile
 from pathlib import Path
 
+from google.auth.transport.requests import Request
+from google.oauth2 import credentials as oauth_credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
@@ -16,35 +23,66 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = Path(__file__).resolve().parent / "gccc-498819-28eb8af3eb04.json"
 
 
-def get_drive_service():
-    """Authenticate and return Google Drive API service.
+def _get_oauth_credentials():
+    """Build credentials from OAuth refresh token (CI mode)."""
+    client_id = os.environ.get("GCP_CLIENT_ID")
+    client_secret = os.environ.get("GCP_CLIENT_SECRET")
+    refresh_token = os.environ.get("GCP_REFRESH_TOKEN")
 
-    Supports two authentication methods:
-    1. Environment variable `GCP_SERVICE_ACCOUNT_KEY` (CI/GitHub Actions)
-    2. Local JSON file `gccc-498819-28eb8af3eb04.json` (local development)
-    """
+    if not all([client_id, client_secret, refresh_token]):
+        return None
+
+    creds = oauth_credentials.Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=SCOPES,
+    )
+    creds.refresh(Request())
+    return creds
+
+
+def _get_service_account_credentials():
+    """Build credentials from service account JSON."""
     sa_key_env = os.environ.get("GCP_SERVICE_ACCOUNT_KEY")
 
     if sa_key_env:
-        # CI mode: key passed as env variable
         key_info = json.loads(sa_key_env)
-        credentials = service_account.Credentials.from_service_account_info(
+        return service_account.Credentials.from_service_account_info(
             key_info,
             scopes=SCOPES,
         )
-    elif SERVICE_ACCOUNT_FILE.exists():
-        # Local mode: key stored as file
-        credentials = service_account.Credentials.from_service_account_file(
+
+    if SERVICE_ACCOUNT_FILE.exists():
+        return service_account.Credentials.from_service_account_file(
             str(SERVICE_ACCOUNT_FILE),
             scopes=SCOPES,
         )
-    else:
-        raise FileNotFoundError(
-            f"Service account key not found. Either set GCP_SERVICE_ACCOUNT_KEY env var "
-            f"or place the JSON file at: {SERVICE_ACCOUNT_FILE}"
-        )
 
-    return build("drive", "v3", credentials=credentials)
+    return None
+
+
+def get_drive_service():
+    """Authenticate and return Google Drive API service."""
+    # 1. Try OAuth (preferred for personal Drive)
+    credentials = _get_oauth_credentials()
+    if credentials:
+        print("[Drive] Using OAuth 2.0 (refresh token)")
+        return build("drive", "v3", credentials=credentials)
+
+    # 2. Fallback to Service Account
+    credentials = _get_service_account_credentials()
+    if credentials:
+        print("[Drive] Using Service Account")
+        return build("drive", "v3", credentials=credentials)
+
+    raise FileNotFoundError(
+        "No Google Drive credentials found. "
+        "Set either (GCP_CLIENT_ID + GCP_CLIENT_SECRET + GCP_REFRESH_TOKEN) "
+        "or GCP_SERVICE_ACCOUNT_KEY."
+    )
 
 
 # ---------------------------------------------------------------------------

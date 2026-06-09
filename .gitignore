@@ -5,3 +5,7 @@ ejemplo_datos_nuevos.xlsx
 
 
 app/api/gccc-*.json
+
+# OAuth client secrets
+client_secret_oauth.json
+token_oauth.json

@@ -13,7 +13,7 @@ on:
           - drive
           - local
       drive_folder_id:
-        description: 'Google Drive GCC_Corp folder ID (required for drive mode)'
+        description: 'Google Drive GCC_Corp folder ID (optional)'
         required: false
         type: string
       new_data_path:
@@ -45,24 +45,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Write GCP Service Account key
-        if: ${{ github.event.inputs.mode == 'drive' || github.event_name == 'schedule' }}
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-        run: |
-          if [ -z "$GCP_SA_KEY" ]; then
-            echo "ERROR: GCP_SERVICE_ACCOUNT_KEY secret is not set."
-            echo "Store the contents of gccc-498819-28eb8af3eb04.json as a repository secret."
-            exit 1
-          fi
-          mkdir -p app/api
-          echo "$GCP_SA_KEY" > app/api/gccc-498819-28eb8af3eb04.json
-
       - name: Run pipeline (Drive mode)
         if: ${{ github.event.inputs.mode == 'drive' || github.event_name == 'schedule' }}
         env:
+          GCP_CLIENT_ID: ${{ secrets.GCP_CLIENT_ID }}
+          GCP_CLIENT_SECRET: ${{ secrets.GCP_CLIENT_SECRET }}
+          GCP_REFRESH_TOKEN: ${{ secrets.GCP_REFRESH_TOKEN }}
           DRIVE_FOLDER_ID: ${{ github.event.inputs.drive_folder_id || vars.DRIVE_FOLDER_ID }}
         run: |
+          if [ -z "$GCP_CLIENT_ID" ] || [ -z "$GCP_CLIENT_SECRET" ] || [ -z "$GCP_REFRESH_TOKEN" ]; then
+            echo "ERROR: OAuth secrets not set."
+            echo "Set GCP_CLIENT_ID, GCP_CLIENT_SECRET, and GCP_REFRESH_TOKEN in GitHub Actions secrets."
+            exit 1
+          fi
           if [ -n "$DRIVE_FOLDER_ID" ]; then
             python app/scripts/run_pipeline.py --use-drive --drive-folder-id "$DRIVE_FOLDER_ID"
           else
