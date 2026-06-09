@@ -144,7 +144,6 @@ def run_pipeline(
     metrics, val_df = calculate_metrics(train_result["test_df"], train_result["y_pred"])
     print(f"MAE:   {metrics['mae_hourly_m3']}")
     print(f"RMSE:  {metrics['rmse_hourly_m3']}")
-    print(f"sMAPE: {metrics['smape_pct']}%")
 
     # ======================================================================
     # 7. SAVE ARTIFACTS (local)

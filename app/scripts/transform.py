@@ -21,7 +21,7 @@ def create_hourly_features(df: pd.DataFrame) -> pd.DataFrame:
     # ========================================================================
     # 1. Hourly aggregation
     # ========================================================================
-    df["hour_bucket"] = df["start_time"].dt.floor("H")
+    df["hour_bucket"] = df["start_time"].dt.floor("h")
 
     hourly = (
         df.groupby(["ship_plant_code", "hour_bucket"])
@@ -147,7 +147,8 @@ def create_hourly_features(df: pd.DataFrame) -> pd.DataFrame:
     # ========================================================================
     # 10. Final selection + cleanup
     # ========================================================================
-    output_cols = [TIME_COL, "ship_plant_code"] + FEATURE_COLS + [TARGET_COL]
+    # Avoid duplicates: TIME_COL and ship_plant_code may already be in FEATURE_COLS
+    output_cols = list(dict.fromkeys([TIME_COL, "ship_plant_code"] + FEATURE_COLS + [TARGET_COL]))
     hourly = hourly[output_cols].copy()
 
     # Drop rows where lag/rolling features are NaN (first rows of each plant)

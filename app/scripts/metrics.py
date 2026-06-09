@@ -8,11 +8,6 @@ import pandas as pd
 from config import TARGET_COL, TIME_COL
 
 
-def smape(y_true, y_pred):
-    """Symmetric MAPE."""
-    return (200 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred))).mean()
-
-
 def calculate_metrics(test_df: pd.DataFrame, y_pred: np.ndarray) -> tuple:
     """
     Calculate metrics from test set predictions.
@@ -31,12 +26,9 @@ def calculate_metrics(test_df: pd.DataFrame, y_pred: np.ndarray) -> tuple:
     # Global metrics
     mae = df["error"].abs().mean()
     rmse = np.sqrt((df["error"] ** 2).mean())
-    smape_val = smape(df[TARGET_COL], df["predicted"])
-
     metrics = {
         "mae_hourly_m3": round(float(mae), 4),
         "rmse_hourly_m3": round(float(rmse), 4),
-        "smape_pct": round(float(smape_val), 2),
         "validation_rows": int(len(df)),
         "date_calculated": datetime.now().isoformat(),
     }
@@ -95,6 +87,5 @@ if __name__ == "__main__":
         print(f"\n--- Metrics ---")
         print(f"MAE:   {metrics['mae_hourly_m3']}")
         print(f"RMSE:  {metrics['rmse_hourly_m3']}")
-        print(f"sMAPE: {metrics['smape_pct']}%")
     else:
         print("Uso: python metrics.py <archivo.xlsx>")

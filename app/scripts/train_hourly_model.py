@@ -87,11 +87,6 @@ NUM_BOOST_ROUND = 500
 EARLY_STOPPING_ROUNDS = 50
 
 
-def smape(y_true, y_pred):
-    """Symmetric MAPE."""
-    return (200 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred))).mean()
-
-
 def train():
 
     print(f"Loading data from {DATA_PATH}")
@@ -134,12 +129,9 @@ def train():
     errors = y_test - y_pred
     mae = np.abs(errors).mean()
     rmse = np.sqrt((errors ** 2).mean())
-    smape_val = smape(y_test, y_pred)
-
     print(f"\n--- Test Metrics ---")
     print(f"MAE:   {mae:.4f} m3/hr")
     print(f"RMSE:  {rmse:.4f} m3/hr")
-    print(f"sMAPE: {smape_val:.2f}%")
 
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(model, f)
@@ -148,7 +140,6 @@ def train():
     metrics = {
         "mae_hourly_m3": round(float(mae), 4),
         "rmse_hourly_m3": round(float(rmse), 4),
-        "smape_pct": round(float(smape_val), 2),
         "validation_rows": int(len(test_df)),
         "date_calculated": datetime.now().isoformat(),
         "test_cutoff_date": TEST_CUTOFF_DATE,

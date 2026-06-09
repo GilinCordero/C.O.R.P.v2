@@ -8,7 +8,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[2]
 
-HOURLY_FEATURES_PARQUET = ROOT / "app" / "data" / "hourly_features_test.parquet"
+HOURLY_FEATURES_PARQUET = ROOT / "app" / "data" / "hourly_features.parquet"
 MODEL_PKL = ROOT / "app" / "models" / "hourly_lgbm.pkl"
 METRICS_JSON = ROOT / "app" / "models" / "metrics_hourly.json"
 VALIDATION_CSV = ROOT / "app" / "outputs" / "forecasts" / "validation_hourly.csv"
