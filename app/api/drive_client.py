@@ -149,6 +149,39 @@ def download_file(service, file_id, local_path: str | Path):
 
 
 # ---------------------------------------------------------------------------
+# Files: find in specific parent
+# ---------------------------------------------------------------------------
+def get_file_in_folder(service, name, parent_id):
+    """Find a file by name inside a specific parent folder. Returns file ID or None."""
+    query = f"name='{name}' and '{parent_id}' in parents and trashed=false"
+    results = service.files().list(q=query, spaces="drive", fields="files(id, name)").execute()
+    files = results.get("files", [])
+    return files[0]["id"] if files else None
+
+
+# ---------------------------------------------------------------------------
+# Files: copy
+# ---------------------------------------------------------------------------
+def copy_file(service, file_id, new_name, parent_id=None):
+    """Copy a Drive file. Optionally place it under a different parent."""
+    metadata = {"name": new_name}
+    if parent_id:
+        metadata["parents"] = [parent_id]
+    file = service.files().copy(fileId=file_id, body=metadata, fields="id").execute()
+    print(f"Copied: {new_name} → ID {file['id']}")
+    return file["id"]
+
+
+# ---------------------------------------------------------------------------
+# Files: delete
+# ---------------------------------------------------------------------------
+def delete_file(service, file_id):
+    """Permanently delete a Drive file or folder."""
+    service.files().delete(fileId=file_id).execute()
+    print(f"Deleted: {file_id}")
+
+
+# ---------------------------------------------------------------------------
 # Files: upload
 # ---------------------------------------------------------------------------
 def upload_file(service, local_path: str | Path, parent_id=None, mime_type=None):

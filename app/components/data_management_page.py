@@ -1,5 +1,6 @@
 """Data management page: upload, retrain, compare, accept/reject."""
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -9,8 +10,12 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 
 from utils.data_loader import load_metrics
+
+# Load local OAuth credentials if present
+load_dotenv()
 
 ROOT = Path(__file__).resolve().parents[2]
 MODELS_DIR = ROOT / "app" / "models"
@@ -149,34 +154,44 @@ def show_data_management_page():
     st.markdown("---")
 
     # ------------------------------------------------------------------
-    # Section 2: Metrics comparison
+    # Section 2: Metrics comparison (Drive integration)
     # ------------------------------------------------------------------
-    artifacts = _find_newest_artifacts()
     current = _load_current_metrics()
-    show_comparison = st.session_state.get("show_comparison", False) or artifacts is not None
 
-    if show_comparison and artifacts and current:
-        st.header("Comparacion de Metricas")
+    # Try to detect pending model from Drive
+    drive_pending = None
+    drive_error = None
+    try:
+        sys.path.insert(0, str(ROOT))
+        from app.utils.drive_sync import get_drive_pending_metrics
+        drive_pending = get_drive_pending_metrics()
+    except Exception as e:
+        drive_error = str(e)
+
+    # Also check for local artifacts (fallback / manual training)
+    local_artifacts = _find_newest_artifacts()
+    show_local = st.session_state.get("show_comparison", False) or local_artifacts is not None
+
+    # --- DRIVE COMPARISON ---
+    if drive_pending and current:
+        st.header("Comparacion de Metricas (Drive)")
 
         col1, col2, col3 = st.columns(3)
 
-        # Old metrics
         col1.metric("MAE (actual)", f"{current['mae_hourly_m3']:.2f}")
         col1.metric("RMSE (actual)", f"{current['rmse_hourly_m3']:.2f}")
 
-        # New metrics with delta
-        new_mae = artifacts["metrics"]["mae_hourly_m3"]
+        new_mae = drive_pending["mae_hourly_m3"]
         old_mae = current["mae_hourly_m3"]
         delta_mae = new_mae - old_mae
 
-        new_rmse = artifacts["metrics"]["rmse_hourly_m3"]
+        new_rmse = drive_pending["rmse_hourly_m3"]
         old_rmse = current["rmse_hourly_m3"]
         delta_rmse = new_rmse - old_rmse
 
         col2.metric("MAE (nuevo)", f"{new_mae:.2f}", f"{delta_mae:+.2f}", delta_color="inverse")
         col2.metric("RMSE (nuevo)", f"{new_rmse:.2f}", f"{delta_rmse:+.2f}", delta_color="inverse")
 
-        # Evaluation
         col3.write("**Evaluacion**")
         if new_mae < old_mae:
             col3.success("MAE MEJORO")
@@ -193,18 +208,80 @@ def show_data_management_page():
         c1, c2 = st.columns(2)
 
         with c1:
-            if st.button("Mantener modelo actual", use_container_width=True):
-                _delete_artifacts(artifacts)
+            if st.button("Mantener modelo actual", use_container_width=True, key="reject_drive"):
+                try:
+                    from app.utils.drive_sync import reject_drive_model
+                    reject_drive_model()
+                    st.success("Modelo actual mantenido. Pendiente eliminado de Drive.")
+                except Exception as e:
+                    st.error(f"Error al rechazar en Drive: {e}")
+                st.rerun()
+
+        with c2:
+            if st.button("Usar nuevo modelo", use_container_width=True, key="accept_drive"):
+                try:
+                    from app.utils.drive_sync import approve_drive_model, download_drive_current_to_local
+                    approve_drive_model()
+                    download_drive_current_to_local()
+                    st.success("Nuevo modelo activado en Drive y descargado localmente.")
+                except Exception as e:
+                    st.error(f"Error al aprobar en Drive: {e}")
+                st.rerun()
+
+    # --- LOCAL COMPARISON (fallback) ---
+    elif show_local and local_artifacts and current:
+        st.header("Comparacion de Metricas (Local)")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("MAE (actual)", f"{current['mae_hourly_m3']:.2f}")
+        col1.metric("RMSE (actual)", f"{current['rmse_hourly_m3']:.2f}")
+
+        new_mae = local_artifacts["metrics"]["mae_hourly_m3"]
+        old_mae = current["mae_hourly_m3"]
+        delta_mae = new_mae - old_mae
+
+        new_rmse = local_artifacts["metrics"]["rmse_hourly_m3"]
+        old_rmse = current["rmse_hourly_m3"]
+        delta_rmse = new_rmse - old_rmse
+
+        col2.metric("MAE (nuevo)", f"{new_mae:.2f}", f"{delta_mae:+.2f}", delta_color="inverse")
+        col2.metric("RMSE (nuevo)", f"{new_rmse:.2f}", f"{delta_rmse:+.2f}", delta_color="inverse")
+
+        col3.write("**Evaluacion**")
+        if new_mae < old_mae:
+            col3.success("MAE MEJORO")
+        else:
+            col3.error("MAE EMPEORO")
+
+        if new_rmse < old_rmse:
+            col3.success("RMSE MEJORO")
+        else:
+            col3.error("RMSE EMPEORO")
+
+        st.markdown("---")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button("Mantener modelo actual", use_container_width=True, key="reject_local"):
+                _delete_artifacts(local_artifacts)
                 st.session_state["show_comparison"] = False
                 st.success("Modelo actual mantenido. Archivos de prueba eliminados.")
                 st.rerun()
 
         with c2:
-            if st.button("Usar nuevo modelo", use_container_width=True):
-                _activate_new_model(artifacts)
+            if st.button("Usar nuevo modelo", use_container_width=True, key="accept_local"):
+                _activate_new_model(local_artifacts)
                 st.session_state["show_comparison"] = False
                 st.success("Nuevo modelo activado. Reinicia la app para usarlo.")
                 st.rerun()
+
+    # --- NO PENDING ---
+    elif drive_error:
+        with st.expander("Drive no disponible"):
+            st.caption(drive_error)
+            st.info("Crea un archivo .env con GCP_CLIENT_ID, GCP_CLIENT_SECRET y GCP_REFRESH_TOKEN para habilitar la sincronizacion con Drive.")
 
     # ------------------------------------------------------------------
     # Section 3: Current model training date

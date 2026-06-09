@@ -182,33 +182,53 @@ def run_pipeline(
     if use_drive and DRIVE_AVAILABLE:
         print("\n--- Uploading to Drive ---")
 
-        # Create archive folder
-        archive_folder_id = get_or_create_folder(
-            service, DRIVE_PATHS["model_archive_dir"].split("/")[-1], parent_id=drive_folder_id
-        )
-
-        # Upload model to archive
+        # models/archive/ (timestamped backup)
+        models_folder_id = get_or_create_folder(service, "models", parent_id=drive_folder_id)
+        archive_folder_id = get_or_create_folder(service, "archive", parent_id=models_folder_id)
         upload_file(service, model_path, parent_id=archive_folder_id)
 
-        # Upload metrics
-        metrics_folder_id = get_or_create_folder(
-            service, "metrics", parent_id=drive_folder_id
-        )
-        upload_file(service, metrics_path, parent_id=metrics_folder_id)
+        # models/pending/ (latest pending model, fixed name)
+        pending_models_folder_id = get_or_create_folder(service, "pending", parent_id=models_folder_id)
+        # Remove previous pending model if exists
+        old_pending_model = find_file(service, "hourly_lgbm.pkl", parent_id=pending_models_folder_id)
+        if old_pending_model:
+            from app.api.drive_client import delete_file
+            delete_file(service, old_pending_model)
+        upload_file(service, model_path, parent_id=pending_models_folder_id)
 
-        # Upload validation
-        upload_file(service, val_path, parent_id=drive_folder_id)
+        # metrics/pending/
+        metrics_folder_id = get_or_create_folder(service, "metrics", parent_id=drive_folder_id)
+        pending_metrics_folder_id = get_or_create_folder(service, "pending", parent_id=metrics_folder_id)
+        old_pending_metrics = find_file(service, "metrics_pending.json", parent_id=pending_metrics_folder_id)
+        if old_pending_metrics:
+            from app.api.drive_client import delete_file
+            delete_file(service, old_pending_metrics)
+        upload_file(service, metrics_path, parent_id=pending_metrics_folder_id)
 
-        # Update version.json
+        # processed/pending/
+        processed_folder_id = get_or_create_folder(service, "processed", parent_id=drive_folder_id)
+        pending_processed_folder_id = get_or_create_folder(service, "pending", parent_id=processed_folder_id)
+        old_pending_val = find_file(service, "validation_pending.csv", parent_id=pending_processed_folder_id)
+        if old_pending_val:
+            from app.api.drive_client import delete_file
+            delete_file(service, old_pending_val)
+        upload_file(service, val_path, parent_id=pending_processed_folder_id)
+
+        # config/version.json
+        config_folder_id = get_or_create_folder(service, "config", parent_id=drive_folder_id)
         version_data = {
-            "active": None,  # Will be set when user approves
+            "active": None,
             "pending": timestamp,
-            "status": "training_done"
+            "status": "pending"
         }
         version_local = Path("/tmp/version.json")
         with open(version_local, "w") as f:
             json.dump(version_data, f)
-        upload_file(service, version_local, parent_id=drive_folder_id)
+        old_version = find_file(service, "version.json", parent_id=config_folder_id)
+        if old_version:
+            from app.api.drive_client import delete_file
+            delete_file(service, old_version)
+        upload_file(service, version_local, parent_id=config_folder_id)
 
         print("\n--- Drive upload complete ---")
 

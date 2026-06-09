@@ -9,3 +9,7 @@ app/api/gccc-*.json
 # OAuth client secrets
 client_secret_oauth.json
 token_oauth.json
+check_drive_quota.py
+debug_drive.py
+generate_oauth_token.pt
+
