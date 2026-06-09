@@ -74,9 +74,8 @@ def run_pipeline(
             raise FileNotFoundError("Historic file not found in Drive at GCC_Corp/raw/original/")
         download_file(service, historic_id, historic_local)
 
-        # Download new pending file
-        pending_name = DRIVE_PATHS["pending_dir"].split("/")[-1]
-        pending_folder_id = get_or_create_folder(service, pending_name, parent_id=drive_folder_id)
+        # Download new pending file from raw/pending/
+        pending_folder_id = get_or_create_folder(service, "pending", parent_id=raw_folder_id)
         # Find the newest file in pending folder
         pending_files = service.files().list(
             q=f"'{pending_folder_id}' in parents and trashed=false",
@@ -84,7 +83,7 @@ def run_pipeline(
             fields="files(id, name, createdTime)"
         ).execute().get("files", [])
         if not pending_files:
-            raise FileNotFoundError("No pending files found in Drive")
+            raise FileNotFoundError("No pending files found in Drive at GCC_Corp/raw/pending/")
         newest = pending_files[0]
         new_local = Path(f"/tmp/{newest['name']}")
         download_file(service, newest["id"], new_local)
