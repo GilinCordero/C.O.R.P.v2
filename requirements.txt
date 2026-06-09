@@ -1,0 +1,17 @@
+# Pipeline & App dependencies
+lightgbm>=4.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+pyarrow>=12.0.0
+holidays>=0.30
+
+# Google Drive API
+google-auth>=2.20.0
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.90.0
+
+# Streamlit app (optional for CI, required for local app)
+streamlit>=1.28.0
+plotly>=5.15.0

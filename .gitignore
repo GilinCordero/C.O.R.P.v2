@@ -1,8 +1,7 @@
-data/
+Modulo_Alberto/data
 
-
-#Docs
-docs\observations.md
 
 ejemplo_datos_nuevos.xlsx
 
+
+app/api/gccc-*.json

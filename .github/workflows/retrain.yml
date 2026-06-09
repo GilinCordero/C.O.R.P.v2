@@ -1,0 +1,100 @@
+name: Retrain Hourly Demand Model
+
+on:
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode'
+        required: true
+        default: 'drive'
+        type: choice
+        options:
+          - drive
+          - local
+      drive_folder_id:
+        description: 'Google Drive GCC_Corp folder ID (required for drive mode)'
+        required: false
+        type: string
+      new_data_path:
+        description: 'Path to new Excel file (required for local mode)'
+        required: false
+        type: string
+
+  # Weekly automatic run (Sundays at 03:00 UTC)
+  schedule:
+    - cron: '0 3 * * 0'
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write GCP Service Account key
+        if: ${{ github.event.inputs.mode == 'drive' || github.event_name == 'schedule' }}
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          if [ -z "$GCP_SA_KEY" ]; then
+            echo "ERROR: GCP_SERVICE_ACCOUNT_KEY secret is not set."
+            echo "Store the contents of gccc-498819-28eb8af3eb04.json as a repository secret."
+            exit 1
+          fi
+          mkdir -p app/api
+          echo "$GCP_SA_KEY" > app/api/gccc-498819-28eb8af3eb04.json
+
+      - name: Run pipeline (Drive mode)
+        if: ${{ github.event.inputs.mode == 'drive' || github.event_name == 'schedule' }}
+        env:
+          DRIVE_FOLDER_ID: ${{ github.event.inputs.drive_folder_id || vars.DRIVE_FOLDER_ID }}
+        run: |
+          if [ -n "$DRIVE_FOLDER_ID" ]; then
+            python app/scripts/run_pipeline.py --use-drive --drive-folder-id "$DRIVE_FOLDER_ID"
+          else
+            python app/scripts/run_pipeline.py --use-drive
+          fi
+
+      - name: Run pipeline (Local mode)
+        if: ${{ github.event.inputs.mode == 'local' }}
+        run: |
+          if [ -z "${{ github.event.inputs.new_data_path }}" ]; then
+            echo "ERROR: new_data_path is required for local mode."
+            exit 1
+          fi
+          python app/scripts/run_pipeline.py --new-data "${{ github.event.inputs.new_data_path }}"
+
+      - name: Upload generated artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: retraining-artifacts-${{ github.run_id }}
+          path: |
+            app/models/hourly_lgbm_*.pkl
+            app/models/metrics_*.json
+            app/outputs/forecasts/validation_*.csv
+            app/data/hourly_features_*.parquet
+          if-no-files-found: warn
+
+      - name: Upload pipeline logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-logs-${{ github.run_id }}
+          path: |
+            *.log
+          if-no-files-found: ignore

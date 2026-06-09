@@ -1,6 +1,8 @@
 """Google Drive API client using GCP Service Account."""
 import io
+import json
 import os
+import tempfile
 from pathlib import Path
 
 from google.oauth2 import service_account
@@ -15,14 +17,33 @@ SERVICE_ACCOUNT_FILE = Path(__file__).resolve().parent / "gccc-498819-28eb8af3eb
 
 
 def get_drive_service():
-    """Authenticate and return Google Drive API service."""
-    if not SERVICE_ACCOUNT_FILE.exists():
-        raise FileNotFoundError(f"Service account key not found: {SERVICE_ACCOUNT_FILE}")
+    """Authenticate and return Google Drive API service.
 
-    credentials = service_account.Credentials.from_service_account_file(
-        str(SERVICE_ACCOUNT_FILE),
-        scopes=SCOPES,
-    )
+    Supports two authentication methods:
+    1. Environment variable `GCP_SERVICE_ACCOUNT_KEY` (CI/GitHub Actions)
+    2. Local JSON file `gccc-498819-28eb8af3eb04.json` (local development)
+    """
+    sa_key_env = os.environ.get("GCP_SERVICE_ACCOUNT_KEY")
+
+    if sa_key_env:
+        # CI mode: key passed as env variable
+        key_info = json.loads(sa_key_env)
+        credentials = service_account.Credentials.from_service_account_info(
+            key_info,
+            scopes=SCOPES,
+        )
+    elif SERVICE_ACCOUNT_FILE.exists():
+        # Local mode: key stored as file
+        credentials = service_account.Credentials.from_service_account_file(
+            str(SERVICE_ACCOUNT_FILE),
+            scopes=SCOPES,
+        )
+    else:
+        raise FileNotFoundError(
+            f"Service account key not found. Either set GCP_SERVICE_ACCOUNT_KEY env var "
+            f"or place the JSON file at: {SERVICE_ACCOUNT_FILE}"
+        )
+
     return build("drive", "v3", credentials=credentials)
 
 
