@@ -6,7 +6,7 @@ This module reads/writes the GCC_Corp Drive structure:
     models/archive/      → historical backups
     metrics/pending/     → new metrics awaiting approval
     metrics/current/     → approved active metrics
-    processed/pending/   → new validation awaiting approval
+    validation/pending/   → new validation awaiting approval
     config/version.json  → state tracker
 """
 import json
@@ -127,6 +127,18 @@ def approve_drive_model(service=None):
             delete_file(service, old_current_metrics)
         copy_file(service, pending_metrics_id_file, "metrics_current.json", parent_id=current_metrics_id)
 
+    # validation/pending/ → validation/current/
+    validation_id = _get_subfolder_id(service, gcc_id, "validation")
+    pending_validation_id = _get_subfolder_id(service, gcc_id, "validation", "pending")
+    current_validation_id = _get_subfolder_id(service, gcc_id, "validation", "current")
+
+    pending_val_id = get_file_in_folder(service, "validation_pending.csv", pending_validation_id)
+    if pending_val_id:
+        old_current_val = get_file_in_folder(service, "validation_current.csv", current_validation_id)
+        if old_current_val:
+            delete_file(service, old_current_val)
+        copy_file(service, pending_val_id, "validation_current.csv", parent_id=current_validation_id)
+
     # Update version.json
     config_id = _get_subfolder_id(service, gcc_id, "config")
     old_version = get_file_in_folder(service, "version.json", config_id)
@@ -151,7 +163,7 @@ def reject_drive_model(service=None):
 
     1. Delete models/pending/hourly_lgbm.pkl
     2. Delete metrics/pending/metrics_pending.json
-    3. Delete processed/pending/validation_pending.csv
+    3. Delete validation/pending/validation_pending.csv
     4. Update config/version.json status → "rejected"
     Returns True on success.
     """
@@ -173,8 +185,8 @@ def reject_drive_model(service=None):
         delete_file(service, pending_metrics)
 
     # Delete pending validation
-    pending_processed_id = _get_subfolder_id(service, gcc_id, "processed", "pending")
-    pending_val = get_file_in_folder(service, "validation_pending.csv", pending_processed_id)
+    pending_validation_id = _get_subfolder_id(service, gcc_id, "validation", "pending")
+    pending_val = get_file_in_folder(service, "validation_pending.csv", pending_validation_id)
     if pending_val:
         delete_file(service, pending_val)
 
@@ -222,6 +234,13 @@ def download_drive_current_to_local(service=None):
     if metrics_file_id:
         local_metrics = Path(__file__).resolve().parents[2] / "app" / "models" / "metrics_hourly.json"
         download_file(service, metrics_file_id, local_metrics)
+
+    # Download validation
+    current_validation_id = _get_subfolder_id(service, gcc_id, "validation", "current")
+    val_file_id = get_file_in_folder(service, "validation_current.csv", current_validation_id)
+    if val_file_id:
+        local_val = Path(__file__).resolve().parents[2] / "app" / "outputs" / "forecasts" / "validation_hourly.csv"
+        download_file(service, val_file_id, local_val)
 
     print("[Drive] Current model downloaded to local")
     return True

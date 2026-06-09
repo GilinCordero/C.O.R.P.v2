@@ -23,7 +23,7 @@ DRIVE_PATHS = {
     "output_parquet": "processed/hourly_features.parquet",
     "output_model": "models/current/hourly_lgbm.pkl",
     "output_metrics": "metrics/metrics_current.json",
-    "output_validation": "processed/validation_hourly.csv",
+    "output_validation": "validation/validation_hourly.csv",
     "model_archive_dir": "models/archive",
     "version_file": "config/version.json",
 }

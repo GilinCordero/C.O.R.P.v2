@@ -205,14 +205,14 @@ def run_pipeline(
             delete_file(service, old_pending_metrics)
         upload_file(service, metrics_path, parent_id=pending_metrics_folder_id)
 
-        # processed/pending/
-        processed_folder_id = get_or_create_folder(service, "processed", parent_id=drive_folder_id)
-        pending_processed_folder_id = get_or_create_folder(service, "pending", parent_id=processed_folder_id)
-        old_pending_val = find_file(service, "validation_pending.csv", parent_id=pending_processed_folder_id)
+        # validation/pending/
+        validation_folder_id = get_or_create_folder(service, "validation", parent_id=drive_folder_id)
+        pending_validation_folder_id = get_or_create_folder(service, "pending", parent_id=validation_folder_id)
+        old_pending_val = find_file(service, "validation_pending.csv", parent_id=pending_validation_folder_id)
         if old_pending_val:
             from app.api.drive_client import delete_file
             delete_file(service, old_pending_val)
-        upload_file(service, val_path, parent_id=pending_processed_folder_id)
+        upload_file(service, val_path, parent_id=pending_validation_folder_id)
 
         # config/version.json
         config_folder_id = get_or_create_folder(service, "config", parent_id=drive_folder_id)
