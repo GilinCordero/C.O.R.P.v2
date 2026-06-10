@@ -304,7 +304,7 @@ def show_data_management_page():
 
     # --- LOCAL COMPARISON (fallback) ---
     elif show_local and local_artifacts and current:
-        st.header("Comparacion de Metricas (Local)")
+        st.header("Comparacion de Metricas")
 
         col1, col2, col3 = st.columns(3)
 
