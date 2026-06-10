@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-from utils.data_loader import load_metrics
+from utils.data_loader import load_metrics, load_model
 
 # Load local OAuth credentials if present
 load_dotenv()
@@ -66,6 +66,15 @@ def _load_current_metrics():
     return None
 
 
+def _clear_model_cache():
+    """Clear cached model and forecast session state so the new model is loaded."""
+    load_model.clear()
+    # Remove any cached forecasts in session_state
+    for key in list(st.session_state.keys()):
+        if key.startswith("forecast_"):
+            del st.session_state[key]
+
+
 def _activate_new_model(artifacts):
     """Copy timestamped artifacts to active filenames."""
     backup_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -87,6 +96,7 @@ def _activate_new_model(artifacts):
     if artifacts["parquet_path"]:
         shutil.copy2(artifacts["parquet_path"], DATA_DIR / "hourly_features.parquet")
 
+    _clear_model_cache()
     return True
 
 
@@ -217,11 +227,19 @@ def show_data_management_page():
     # Try to detect pending model from Drive
     drive_pending = None
     drive_error = None
+    drive_connected = False
     try:
         from app.utils.drive_sync import get_drive_pending_metrics
         drive_pending = get_drive_pending_metrics()
+        drive_connected = True
     except Exception as e:
         drive_error = str(e)
+
+    # Show Drive status indicator
+    if drive_connected:
+        st.success("Conectado a Google Drive")
+    elif drive_error:
+        st.warning(f"Drive no disponible: {drive_error}")
 
     # Also check for local artifacts (fallback / manual training)
     local_artifacts = _find_newest_artifacts()
@@ -278,6 +296,7 @@ def show_data_management_page():
                     from app.utils.drive_sync import approve_drive_model, download_drive_current_to_local
                     approve_drive_model()
                     download_drive_current_to_local()
+                    _clear_model_cache()
                     st.success("Nuevo modelo activado en Drive y descargado localmente.")
                 except Exception as e:
                     st.error(f"Error al aprobar en Drive: {e}")
@@ -331,12 +350,6 @@ def show_data_management_page():
                 st.session_state["show_comparison"] = False
                 st.success("Nuevo modelo activado. Reinicia la app para usarlo.")
                 st.rerun()
-
-    # --- NO PENDING ---
-    elif drive_error:
-        with st.expander("Drive no disponible"):
-            st.caption(drive_error)
-            st.info("Crea un archivo .env con GCP_CLIENT_ID, GCP_CLIENT_SECRET y GCP_REFRESH_TOKEN para habilitar la sincronizacion con Drive.")
 
     # ------------------------------------------------------------------
     # Section 3: Current model training date
