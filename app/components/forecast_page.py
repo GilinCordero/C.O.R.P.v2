@@ -112,9 +112,15 @@ def show_forecast_page():
         st.dataframe(display_df, use_container_width=True, hide_index=True)
 
         # Export
-        if st.button("Exportar CSV", key="export_hourly"):
-            path = save_forecast_csv(forecast, f"forecast_hourly_{plant_id}_{datetime.now().strftime('%Y%m%d')}.csv")
-            st.success(f"Guardado en: {path}")
+        csv_buffer = io.StringIO()
+        forecast.to_csv(csv_buffer, index=False)
+        st.download_button(
+            label="Descargar CSV",
+            data=csv_buffer.getvalue(),
+            file_name=f"forecast_hourly_{plant_id}_{datetime.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            key="export_hourly",
+        )
 
     # ==================== TAB 2: Daily Aggregation ====================
     with tab2:
