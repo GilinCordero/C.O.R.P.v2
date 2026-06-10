@@ -2,7 +2,7 @@
   "mae_hourly_m3": 6.9267,
   "rmse_hourly_m3": 10.6276,
   "validation_rows": 21117,
-  "date_calculated": "2026-06-08T19:52:02.206532",
+  "date_calculated": "2026-06-10T01:07:38.155803",
   "by_plant": {
     "510": {
       "mae": 7.8561,

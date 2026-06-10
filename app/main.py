@@ -6,7 +6,7 @@ Hourly prediction with native LightGBM model.
 import sys
 from pathlib import Path
 
-# Add project root to path so 'app' is importable when running streamlit run app/app.py
+# Add project root to path so 'app' is importable when running streamlit run app/main.py
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
@@ -48,28 +48,27 @@ def show_login_page():
 
 def show_main_app():
     """Render main app after login."""
-    st.sidebar.image("./app/assets/logo_GCC.png", width=150)
-    st.sidebar.title("C.O.R.P. v2")
-    st.sidebar.markdown("Prediccion horaria de demanda")
-    st.sidebar.markdown("---")
+    with st.sidebar:
+        st.image("./app/assets/logo_GCC.png", width=150)
+        st.title("C.O.R.P. v2")
+        st.markdown("Prediccion horaria de demanda")
+        st.markdown("---")
 
-    page = st.sidebar.radio(
-        "Navegacion",
-        ["Prediccion de Demanda", "Gestion de Datos"],
-        label_visibility="collapsed",
-        key="nav_radio",
-    )
-
-    st.sidebar.markdown("---")
-
-    if st.sidebar.button("Cerrar Sesion", use_container_width=True):
-        logout()
-        st.rerun()
+        page = st.radio(
+            "Navegacion",
+            ["Prediccion de Demanda", "Reentrenamiento de Modelo"],
+            label_visibility="collapsed",
+            key="nav_radio",
+        )
+        st.markdown("---")
+        if st.button("Cerrar Sesion", use_container_width=True, key="logout_btn"):
+            logout()
+            st.rerun()
 
     if page == "Prediccion de Demanda":
         from components.forecast_page import show_forecast_page
         show_forecast_page()
-    elif page == "Gestion de Datos":
+    elif page == "Reentrenamiento de Modelo":
         from components.data_management_page import show_data_management_page
         show_data_management_page()
 
