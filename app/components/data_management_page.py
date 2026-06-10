@@ -90,6 +90,28 @@ def _activate_new_model(artifacts):
     return True
 
 
+def _upload_to_drive_pending(temp_path: Path):
+    """Upload validated file to Drive raw/pending/ and return success status."""
+    try:
+        from app.api.drive_client import (
+            get_drive_service,
+            get_or_create_folder,
+            find_folder,
+            upload_file,
+        )
+        service = get_drive_service()
+        gcc_id = find_folder(service, "GCC_Corp")
+        if not gcc_id:
+            raise FileNotFoundError("GCC_Corp folder not found in Drive")
+        raw_id = get_or_create_folder(service, "raw", parent_id=gcc_id)
+        pending_id = get_or_create_folder(service, "pending", parent_id=raw_id)
+        upload_file(service, temp_path, parent_id=pending_id)
+        return True
+    except Exception as e:
+        st.error(f"Error al subir a Drive: {e}")
+        return False
+
+
 def _delete_artifacts(artifacts):
     """Delete timestamped artifacts (user rejected them)."""
     for path in [artifacts["model_path"], artifacts["metrics_path"],
@@ -130,26 +152,57 @@ def show_data_management_page():
             st.write("Vista previa:")
             st.dataframe(df_preview, use_container_width=True)
 
-            if st.button("Entrenar modelo con estos datos", use_container_width=True):
-                with st.spinner("Entrenando modelo... (esto puede tardar 3-5 minutos)"):
-                    pipeline_script = ROOT / "app" / "scripts" / "run_pipeline.py"
+            col_local, col_drive = st.columns(2)
 
-                    result = subprocess.run(
-                        [sys.executable, str(pipeline_script), "--new-data", str(temp_path)],
-                        capture_output=True,
-                        text=True,
-                        cwd=str(ROOT),
-                    )
+            with col_local:
+                if st.button("Entrenar local (desarrollo)", use_container_width=True, key="train_local"):
+                    with st.spinner("Entrenando modelo local... (esto puede tardar 3-5 minutos)"):
+                        pipeline_script = ROOT / "app" / "scripts" / "run_pipeline.py"
 
-                    if result.returncode != 0:
-                        st.error("Error durante el entrenamiento:")
-                        st.code(result.stderr or result.stdout)
-                    else:
-                        st.success("Entrenamiento completado exitosamente.")
-                        with st.expander("Ver logs del entrenamiento"):
-                            st.code(result.stdout)
-                        st.session_state["show_comparison"] = True
-                        st.rerun()
+                        result = subprocess.run(
+                            [sys.executable, str(pipeline_script), "--new-data", str(temp_path)],
+                            capture_output=True,
+                            text=True,
+                            cwd=str(ROOT),
+                        )
+
+                        if result.returncode != 0:
+                            st.error("Error durante el entrenamiento local:")
+                            st.code(result.stderr or result.stdout)
+                        else:
+                            st.success("Entrenamiento local completado.")
+                            with st.expander("Ver logs"):
+                                st.code(result.stdout)
+                            st.session_state["show_comparison"] = True
+                            st.rerun()
+
+            with col_drive:
+                if st.button("Subir a Drive y entrenar", use_container_width=True, key="train_drive", type="primary"):
+                    with st.spinner("Subiendo a Drive y entrenando... (esto puede tardar 3-5 minutos)"):
+                        # 1. Upload to Drive raw/pending/
+                        uploaded_ok = _upload_to_drive_pending(temp_path)
+                        if not uploaded_ok:
+                            st.error("No se pudo subir el archivo a Drive. Revisa las credenciales.")
+                            st.stop()
+
+                        # 2. Run pipeline in Drive mode
+                        pipeline_script = ROOT / "app" / "scripts" / "run_pipeline.py"
+                        result = subprocess.run(
+                            [sys.executable, str(pipeline_script), "--use-drive"],
+                            capture_output=True,
+                            text=True,
+                            cwd=str(ROOT),
+                        )
+
+                        if result.returncode != 0:
+                            st.error("Error durante el entrenamiento en Drive:")
+                            st.code(result.stderr or result.stdout)
+                        else:
+                            st.success("Entrenamiento en Drive completado. Revisa la comparacion de metricas.")
+                            with st.expander("Ver logs"):
+                                st.code(result.stdout)
+                            st.session_state["show_comparison"] = True
+                            st.rerun()
 
         except Exception as e:
             st.error(f"Error de validacion: {e}")
